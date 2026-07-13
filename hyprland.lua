@@ -23,6 +23,7 @@ local SECTIONS = {
     "programs",
     "autostart",
     "environment",
+    "cursor",
     "look_and_feel",
     "input",
     "keybindings",

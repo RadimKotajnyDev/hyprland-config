@@ -1,8 +1,7 @@
 -- https://wiki.hypr.land/Configuring/Environment-variables/
 
+-- Cursor env vars live in sections/cursor.lua.
 local env = {
-    { "XCURSOR_SIZE", 24 },
-    { "HYPRCURSOR_SIZE", 24 },
     -- Keeps the Steam desktop UI legible on the 125%-scaled ultrawide.
     { "STEAM_FORCE_DESKTOPUI_SCALE", 1.25 },
 }
