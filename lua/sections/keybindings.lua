@@ -1,100 +1,73 @@
 -- https://wiki.hypr.land/Configuring/Binds/
 
-local GAMING_MODE = "DP-1, 1920x1080@175, 1920x0, 1"
-local PRODUCTIVITY_MODE = "DP-1, 3440x1440@175, 1920x0, 1.25"
+local programs = require("lua.sections.programs")
 
--- Workspace keys 1..9 then 0 -> workspace 10.
-local WORKSPACE_KEYS = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" }
-local function workspace_for(key)
-    return key == "0" and 10 or tonumber(key)
+-- "Windows" key as the main modifier
+local mainMod = "SUPER"
+
+-- Monitor modes for the toggle binds below. These call hl.monitor() directly:
+-- `hyprctl keyword` only works with the legacy hyprlang parser, so the old
+-- `exec, hyprctl keyword monitor ...` form is a no-op under the Lua config.
+local GAMING_MODE       = { output = "DP-1", mode = "1920x1080@175", position = "1920x0", scale = 1 }
+local PRODUCTIVITY_MODE = { output = "DP-1", mode = "3440x1440@175", position = "1920x0", scale = 1.25 }
+
+-- Apps and window management
+hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(programs.terminal))
+hl.bind(mainMod .. " + C", hl.dsp.window.close())
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd(
+    "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
+hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+-- Real fullscreen; pressing again toggles back out
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(programs.menu))
+hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
+hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
+
+-- Move focus with mainMod + arrow keys
+for _, dir in ipairs({ "left", "right", "up", "down" }) do
+    hl.bind(mainMod .. " + " .. dir, hl.dsp.focus({ direction = dir }))
 end
 
--- mod, key, dispatcher, arg -> "mod, key, dispatcher, arg"
-local function spec(mod, key, dispatcher, arg)
-    local parts = { mod, key, dispatcher }
-    if arg ~= nil then
-        parts[#parts + 1] = arg
-    end
-    return table.concat(parts, ", ")
+-- Switch workspaces with mainMod + [0-9], move the active window with mainMod + SHIFT + [0-9]
+for i = 1, 10 do
+    local key = i % 10 -- 10 maps to key 0
+    hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
+    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
 end
 
-return function(b)
-    b:banner("KEYBINDINGS"):blank()
+-- Rofi window switcher
+hl.bind("ALT + Tab", hl.dsp.exec_cmd("rofi -show window"))
 
-    b:comment('"Windows" key as the main modifier')
-    b:var("mainMod", "SUPER")
-    b:blank()
+-- Gaming mode: main monitor to raw 1080p, no scaling
+hl.bind(mainMod .. " + ALT + G", function() hl.monitor(GAMING_MODE) end)
+-- Productivity mode: back to ultrawide at 125% scale
+hl.bind(mainMod .. " + ALT + P", function() hl.monitor(PRODUCTIVITY_MODE) end)
 
-    b:comment("Apps and window management")
-    b:kw("bind", spec("$mainMod", "Q", "exec", "$terminal"))
-    b:kw("bind", spec("$mainMod", "C", "killactive"))
-    b:kw("bind", spec("$mainMod", "M", "exec",
-        "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
-    b:kw("bind", spec("$mainMod", "E", "exec", "$fileManager"))
-    b:kw("bind", spec("$mainMod", "V", "togglefloating"))
-    b:comment("fullscreen 0 = real fullscreen; pressing again toggles back out")
-    b:kw("bind", spec("$mainMod", "F", "fullscreen", 0))
-    b:kw("bind", spec("$mainMod", "R", "exec", "$menu"))
-    b:kw("bind", spec("$mainMod", "P", "pseudo"))
-    b:kw("bind", spec("$mainMod", "J", "layoutmsg", "togglesplit"))
-    b:blank()
+-- Special workspace (scratchpad)
+hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
-    b:comment("Move focus with mainMod + arrow keys")
-    for _, d in ipairs({ { "left", "l" }, { "right", "r" }, { "up", "u" }, { "down", "d" } }) do
-        b:kw("bind", spec("$mainMod", d[1], "movefocus", d[2]))
-    end
-    b:blank()
+-- Scroll through existing workspaces with mainMod + scroll
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 
-    b:comment("Switch workspaces with mainMod + [0-9]")
-    for _, key in ipairs(WORKSPACE_KEYS) do
-        b:kw("bind", spec("$mainMod", key, "workspace", workspace_for(key)))
-    end
-    b:blank()
+-- Move/resize windows with mainMod + LMB/RMB and dragging
+hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
-    b:comment("Move active window to a workspace with mainMod + SHIFT + [0-9]")
-    for _, key in ipairs(WORKSPACE_KEYS) do
-        b:kw("bind", spec("$mainMod SHIFT", key, "movetoworkspace", workspace_for(key)))
-    end
-    b:blank()
+-- Volume and brightness keys (repeat while held, work when locked)
+local held = { locked = true, repeating = true }
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), held)
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), held)
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), held)
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), held)
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), held)
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), held)
 
-    b:comment("Rofi window switcher")
-    b:kw("bind", spec("ALT", "Tab", "exec", "rofi -show window"))
-    b:blank()
-
-    b:comment("Gaming mode: main monitor to raw 1080p, no scaling")
-    b:kw("bind", spec("$mainMod ALT", "G", "exec", ('hyprctl keyword monitor "%s"'):format(GAMING_MODE)))
-    b:comment("Productivity mode: back to ultrawide at 125% scale")
-    b:kw("bind", spec("$mainMod ALT", "P", "exec", ('hyprctl keyword monitor "%s"'):format(PRODUCTIVITY_MODE)))
-    b:blank()
-
-    b:comment("Special workspace (scratchpad)")
-    b:kw("bind", spec("$mainMod", "S", "togglespecialworkspace", "magic"))
-    b:kw("bind", spec("$mainMod SHIFT", "S", "movetoworkspace", "special:magic"))
-    b:blank()
-
-    b:comment("Scroll through existing workspaces with mainMod + scroll")
-    b:kw("bind", spec("$mainMod", "mouse_down", "workspace", "e+1"))
-    b:kw("bind", spec("$mainMod", "mouse_up", "workspace", "e-1"))
-    b:blank()
-
-    b:comment("Move/resize windows with mainMod + LMB/RMB and dragging")
-    b:kw("bindm", spec("$mainMod", "mouse:272", "movewindow"))
-    b:kw("bindm", spec("$mainMod", "mouse:273", "resizewindow"))
-    b:blank()
-
-    b:comment("Volume and brightness keys (repeat while held, work when locked)")
-    b:kw("bindel", spec("", "XF86AudioRaiseVolume", "exec", "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"))
-    b:kw("bindel", spec("", "XF86AudioLowerVolume", "exec", "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
-    b:kw("bindel", spec("", "XF86AudioMute", "exec", "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
-    b:kw("bindel", spec("", "XF86AudioMicMute", "exec", "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
-    b:kw("bindel", spec("", "XF86MonBrightnessUp", "exec", "brightnessctl -e4 -n2 set 5%+"))
-    b:kw("bindel", spec("", "XF86MonBrightnessDown", "exec", "brightnessctl -e4 -n2 set 5%-"))
-    b:blank()
-
-    b:comment("Media keys (requires playerctl)")
-    b:kw("bindl", spec("", "XF86AudioNext", "exec", "playerctl next"))
-    b:kw("bindl", spec("", "XF86AudioPause", "exec", "playerctl play-pause"))
-    b:kw("bindl", spec("", "XF86AudioPlay", "exec", "playerctl play-pause"))
-    b:kw("bindl", spec("", "XF86AudioPrev", "exec", "playerctl previous"))
-    b:blank()
-end
+-- Media keys (requires playerctl)
+local locked = { locked = true }
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), locked)
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), locked)
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), locked)
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), locked)

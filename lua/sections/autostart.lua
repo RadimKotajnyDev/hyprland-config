@@ -1,20 +1,13 @@
 -- Processes started with the session (notification daemons, bars, wallpaper, ...).
--- Add entries here, e.g. { "waybar" } or { "$terminal" }.
+-- Add entries here, e.g. "waybar" or "nm-applet".
+
+local startup = require("lua.lib.startup")
 
 local autostart = {
-    -- "nm-applet &",
+    -- "nm-applet",
     -- "waybar & hyprpaper & firefox",
 }
 
-return function(b)
-    b:banner("AUTOSTART"):blank()
-
-    if #autostart == 0 then
-        b:comment("(nothing to autostart yet - add entries in lua/sections/autostart.lua)")
-    else
-        for _, cmd in ipairs(autostart) do
-            b:kw("exec-once", cmd)
-        end
-    end
-    b:blank()
+for _, cmd in ipairs(autostart) do
+    startup.add(cmd)
 end

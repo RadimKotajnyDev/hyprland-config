@@ -4,24 +4,19 @@
 --   gsettings   -> GTK apps, which ignore XCURSOR_SIZE on Wayland entirely
 -- Change SIZE here and all three stay in sync.
 
+local startup = require("lua.lib.startup")
+
 local SIZE = 20
 local THEME = "default"
 
-return function(b)
-    b:banner("CURSOR"):blank()
+hl.env("XCURSOR_SIZE", tostring(SIZE))
+hl.env("HYPRCURSOR_SIZE", tostring(SIZE))
+hl.env("XCURSOR_THEME", THEME)
+hl.env("HYPRCURSOR_THEME", THEME)
 
-    b:kw("env", "XCURSOR_SIZE, " .. SIZE)
-    b:kw("env", "HYPRCURSOR_SIZE, " .. SIZE)
-    b:kw("env", "XCURSOR_THEME, " .. THEME)
-    b:kw("env", "HYPRCURSOR_THEME, " .. THEME)
-    b:blank()
+-- Compositor cursor, applied at startup
+startup.add(("hyprctl setcursor %s %d"):format(THEME, SIZE))
 
-    b:comment("Compositor cursor, applied at startup")
-    b:kw("exec-once", ("hyprctl setcursor %s %d"):format(THEME, SIZE))
-    b:blank()
-
-    b:comment("GTK apps read gsettings, not XCURSOR_SIZE")
-    b:kw("exec-once", ("gsettings set org.gnome.desktop.interface cursor-theme '%s'"):format(THEME))
-    b:kw("exec-once", ("gsettings set org.gnome.desktop.interface cursor-size %d"):format(SIZE))
-    b:blank()
-end
+-- GTK apps read gsettings, not XCURSOR_SIZE
+startup.add(("gsettings set org.gnome.desktop.interface cursor-theme '%s'"):format(THEME))
+startup.add(("gsettings set org.gnome.desktop.interface cursor-size %d"):format(SIZE))

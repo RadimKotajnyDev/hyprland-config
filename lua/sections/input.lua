@@ -1,36 +1,28 @@
 -- https://wiki.hypr.land/Configuring/Variables/#input
 
-return function(b)
-    b:banner("INPUT"):blank()
+hl.config({
+    input = {
+        kb_layout  = "cz,us",
+        kb_variant = "",
+        kb_model   = "",
+        -- Alt+Shift cycles cz <-> us
+        kb_options = "grp:alt_shift_toggle",
+        kb_rules   = "",
 
-    b:block("input", function(i)
-        i:kw("kb_layout", "cz,us")
-        i:kw("kb_variant", "")
-        i:kw("kb_model", "")
-        i:comment("Alt+Shift cycles cz <-> us")
-        i:kw("kb_options", "grp:alt_shift_toggle")
-        i:kw("kb_rules", "")
-        i:blank()
-        i:kw("follow_mouse", 1)
-        i:blank()
-        i:comment("-1.0 - 1.0, 0 means no modification")
-        i:kw("sensitivity", 0)
-        i:kw("accel_profile", "flat")
-        i:blank()
-        i:block("touchpad", function(t)
-            t:kw("natural_scroll", false)
-        end)
-    end)
-    b:blank()
+        follow_mouse = 1,
 
-    b:comment("https://wiki.hypr.land/Configuring/Gestures")
-    b:kw("gesture", "3, horizontal, workspace")
-    b:blank()
+        -- -1.0 - 1.0, 0 means no modification
+        sensitivity   = 0,
+        accel_profile = "flat",
 
-    b:comment("Per-device config: https://wiki.hypr.land/Configuring/Keywords/#per-device-input-configs")
-    b:block("device", function(d)
-        d:kw("name", "epic-mouse-v1")
-        d:kw("sensitivity", -0.5)
-    end)
-    b:blank()
-end
+        touchpad = {
+            natural_scroll = false,
+        },
+    },
+})
+
+-- https://wiki.hypr.land/Configuring/Gestures
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+
+-- Per-device config: https://wiki.hypr.land/Configuring/Devices/
+hl.device({ name = "epic-mouse-v1", sensitivity = -0.5 })
