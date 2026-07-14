@@ -4,8 +4,8 @@
 local startup = require("lua.lib.startup")
 
 local autostart = {
-    -- "nm-applet",
-    -- "waybar & hyprpaper & firefox",
+    "hyprpaper", -- wallpaper daemon, reads hyprpaper.conf
+    "waybar",
 }
 
 for _, cmd in ipairs(autostart) do

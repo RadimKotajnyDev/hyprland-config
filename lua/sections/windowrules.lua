@@ -32,6 +32,14 @@ hl.window_rule({
     float = true,
 })
 
+-- Warp is the only window that gets transparency
+hl.window_rule({
+    name    = "warp-opacity",
+    match   = { class = "^(dev\\.warp\\.Warp)$" },
+
+    opacity = "0.95 0.95",
+})
+
 -- Let XWayland apps render at native scale (no blurry upscaling)
 hl.config({
     xwayland = {

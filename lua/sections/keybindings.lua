@@ -5,11 +5,19 @@ local programs = require("lua.sections.programs")
 -- "Windows" key as the main modifier
 local mainMod = "SUPER"
 
--- Monitor modes for the toggle binds below. These call hl.monitor() directly:
+-- Monitor modes for the toggle bind below. These call hl.monitor() directly:
 -- `hyprctl keyword` only works with the legacy hyprlang parser, so the old
 -- `exec, hyprctl keyword monitor ...` form is a no-op under the Lua config.
 local GAMING_MODE       = { output = "DP-1", mode = "1920x1080@175", position = "1920x0", scale = 1 }
 local PRODUCTIVITY_MODE = { output = "DP-1", mode = "3440x1440@175", position = "1920x0", scale = 1.25 }
+
+-- Which mode we're in is read back off the monitor rather than tracked in a
+-- variable, so the toggle can't drift out of sync if the mode is changed elsewhere.
+local function toggle_monitor_mode()
+    local mon = hl.get_monitor(GAMING_MODE.output)
+    local in_gaming = mon and mon.width == 1920
+    hl.monitor(in_gaming and PRODUCTIVITY_MODE or GAMING_MODE)
+end
 
 -- Apps and window management
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(programs.terminal))
@@ -20,7 +28,7 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 -- Real fullscreen; pressing again toggles back out
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(programs.menu))
+hl.bind(mainMod .. " + space", hl.dsp.exec_cmd(programs.menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 
@@ -37,12 +45,10 @@ for i = 1, 10 do
 end
 
 -- Rofi window switcher
-hl.bind("ALT + Tab", hl.dsp.exec_cmd("rofi -show window"))
+hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd("rofi -show window"))
 
--- Gaming mode: main monitor to raw 1080p, no scaling
-hl.bind(mainMod .. " + ALT + G", function() hl.monitor(GAMING_MODE) end)
--- Productivity mode: back to ultrawide at 125% scale
-hl.bind(mainMod .. " + ALT + P", function() hl.monitor(PRODUCTIVITY_MODE) end)
+-- Toggle the main monitor: gaming (raw 1080p, no scaling) <-> productivity (ultrawide @ 125%)
+hl.bind(mainMod .. " + ALT + G", toggle_monitor_mode)
 
 -- Special workspace (scratchpad)
 hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))

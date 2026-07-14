@@ -7,9 +7,11 @@ hl.config({
         gaps_out = 20,
 
         border_size = 2,
+        -- Gruvbox: yellow -> orange gradient on focus, bg3 when inactive.
+        -- Same yellow (#fabd2f) as the active workspace marker in waybar.
         col = {
-            active_border   = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
-            inactive_border = "rgba(595959aa)",
+            active_border   = { colors = { "rgba(fabd2fee)", "rgba(fe8019ee)" }, angle = 45 },
+            inactive_border = "rgba(665c54aa)",
         },
 
         -- Resize windows by dragging borders and gaps
@@ -26,6 +28,12 @@ hl.config({
 
         active_opacity   = 1.0,
         inactive_opacity = 1.0,
+
+        -- Dim windows that aren't focused, on top of the opacity above.
+        dim_inactive = true,
+        dim_strength = 0.2,
+        -- The special workspace (scratchpad) dims what's behind it.
+        dim_special  = 0.3,
 
         shadow = {
             enabled      = true,

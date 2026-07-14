@@ -13,7 +13,14 @@ hl.config({
 
         -- -1.0 - 1.0, 0 means no modification
         sensitivity   = 0,
-        accel_profile = "flat",
+
+        -- "flat" removes the acceleration curve, but input still goes through
+        -- libinput's pointer handling. force_no_accel bypasses that too, which
+        -- is as close to a raw signal as the compositor gets.
+        -- If the cursor ever desyncs from where clicks land, this is the cause:
+        -- set it back to false.
+        accel_profile  = "flat",
+        force_no_accel = true,
 
         touchpad = {
             natural_scroll = false,
@@ -25,4 +32,5 @@ hl.config({
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 
 -- Per-device config: https://wiki.hypr.land/Configuring/Devices/
-hl.device({ name = "epic-mouse-v1", sensitivity = -0.5 })
+-- The mouse enumerates as "logitech-pro-x-2-1" (see `hyprctl devices`).
+-- Nothing to override on it right now; global input settings above apply.
