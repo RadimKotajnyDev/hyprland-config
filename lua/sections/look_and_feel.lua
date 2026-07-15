@@ -30,7 +30,7 @@ hl.config({
         inactive_opacity = 1.0,
 
         -- Dim windows that aren't focused, on top of the opacity above.
-        dim_inactive = true,
+        dim_inactive = false,
         dim_strength = 0.2,
         -- The special workspace (scratchpad) dims what's behind it.
         dim_special  = 0.3,
