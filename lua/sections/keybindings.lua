@@ -47,12 +47,25 @@ end
 -- Rofi window switcher
 hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd("rofi -show window"))
 
+-- Screenshots (Spectacle-like). Script lives in ~/.config/hypr/scripts/.
+-- No Print key on this keyboard, so the family hangs off SUPER + SHIFT + S.
+local screenshot = "~/.config/hypr/scripts/screenshot.sh"
+-- SUPER + SHIFT + S -> drag-select a region, then annotate/save/copy in satty
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(screenshot .. " region"))
+-- SUPER + SHIFT + D -> capture the focused monitor (display), then satty
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd(screenshot .. " screen"))
+-- SUPER + SHIFT + W -> capture the active window, then satty
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(screenshot .. " window"))
+-- SUPER + CTRL + S  -> region straight to the clipboard, no editor
+hl.bind(mainMod .. " + CTRL + S", hl.dsp.exec_cmd(screenshot .. " region-copy"))
+
 -- Toggle the main monitor: gaming (raw 1080p, no scaling) <-> productivity (ultrawide @ 125%)
 hl.bind(mainMod .. " + ALT + G", toggle_monitor_mode)
 
 -- Special workspace (scratchpad)
 hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+-- Moved off SUPER+SHIFT+S (now the screenshot bind) to SUPER+ALT+S.
+hl.bind(mainMod .. " + ALT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- Scroll through existing workspaces with mainMod + scroll
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
